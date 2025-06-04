@@ -1,0 +1,32 @@
+@startuml
+actor Оператор as User
+participant "MES Backend" as Backend
+participant "Redis" as Cache
+participant "Database" as DB
+
+User -> Backend: PATCH /orders/123\n{status: "MANUFACTURING_COMPLETED"}
+activate Backend
+
+Backend -> DB: UPDATE orders\nSET status='MANUFACTURING_COMPLETED'\nWHERE id=123
+activate DB
+DB --> Backend: OK
+deactivate DB
+
+Backend -> Cache: DEL orders:status=MANUFACTURING_APPROVED
+activate Cache
+Cache --> Backend: Удалено
+deactivate Cache
+
+Backend -> Cache: DEL orders:status=MANUFACTURING_STARTED
+activate Cache
+Cache --> Backend: Удалено
+deactivate Cache
+
+Backend -> Cache: DEL order:123
+activate Cache
+Cache --> Backend: Удалено
+deactivate Cache
+
+Backend --> User: Статус обновлен
+deactivate Backend
+@enduml

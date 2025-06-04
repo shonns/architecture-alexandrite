@@ -1,0 +1,33 @@
+@startuml
+actor Оператор as User
+participant "MES Backend" as Backend
+participant "Redis" as Cache
+participant "Database" as DB
+
+User -> Backend: GET /orders?status=MANUFACTURING_APPROVED
+activate Backend
+
+Backend -> Cache: GET orders:status=MANUFACTURING_APPROVED
+activate Cache
+
+alt Данные в кеше
+    Cache --> Backend: Возврат кешированных данных
+    deactivate Cache
+else Данных нет
+    Cache --> Backend: null
+    deactivate Cache
+
+    Backend -> DB: SELECT * FROM orders\nWHERE status='MANUFACTURING_APPROVED'
+    activate DB
+    DB --> Backend: Результат запроса
+    deactivate DB
+
+    Backend -> Cache: SET orders:status=MANUFACTURING_APPROVED\nvalue=result TTL=30
+    activate Cache
+    Cache --> Backend: OK
+    deactivate Cache
+end
+
+Backend --> User: Отображение списка заказов
+deactivate Backend
+@enduml
